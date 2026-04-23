@@ -1,6 +1,6 @@
 # TRACE — Full Pipeline
 
-TRACE is an end-to-end system for automated 2-D surface thickness scanning using a stepper-motor-driven XY stage, an analog displacement sensor, and MATLAB for data acquisition and cross-sectional area analysis.
+TRACE is an end-to-end system for automated 2-D surface thickness scanning using stepper-motor-based linear actuators, an analog laser displacement sensor, Arduino for motor control and data acquisition, and MATLAB for cross-sectional area analysis.
 
 ---
 
@@ -27,7 +27,7 @@ TRACE is an end-to-end system for automated 2-D surface thickness scanning using
 └─────────────────────────────────────────────────────────────┘
 ```
 
-The two Arduino sketches are **loaded separately** depending on the mode needed (automated scan vs. manual stage jogging). The two MATLAB files are run in sequence: acquisition first, then the GUI for analysis.
+The two Arduino sketches are **loaded separately** depending on the mode needed (automated scan vs. manual stage jogging). Manual stage jogging is used to set starting position of scan. Automated scan is responsible for scanning and data collection. The two MATLAB files are run in sequence: acquisition first alongside automated scan, then the GUI for analysis.
 
 ---
 
@@ -35,7 +35,7 @@ The two Arduino sketches are **loaded separately** depending on the mode needed 
 
 ```
 .
-├── StepperMotorFullMotion.ino    # Arduino: automated boustrophedon raster scan
+├── StepperMotorFullMotion.ino    # Arduino: automated snake scan
 ├── StepperMotorController.ino   # Arduino: manual toggle control (stage jogging / setup)
 ├── ArduinoDataAcquisition.m     # MATLAB: serial trigger + data capture to .txt
 └── csa_gui.m                    # MATLAB: cross-sectional area & volume analysis GUI
@@ -48,10 +48,11 @@ The two Arduino sketches are **loaded separately** depending on the mode needed 
 | Component | Notes |
 |---|---|
 | Arduino (Uno / Mega) | Tested at 9600 baud |
-| 2× Stepper motor + driver | A4988 or DRV8825 compatible; active-low EN pin |
-| Analog displacement sensor | Outputs 0–5 V; wired to `A0` |
-| XY linear stage | Belt or lead-screw driven |
+| 2× Stepper motor + driver | TMC2209 compatible; active-low EN pin |
+| Panasonic laser displacement sensor | Outputs 0–5 V; wired to `A0` |
+| NEMA 11 Linear Actuators | Wired to TMC2209 |
 | USB cable | Arduino ↔ host PC |
+| 12V DC Power Supply| Laser & Motor Power |
 
 ### Pin Assignments (both sketches)
 
@@ -81,7 +82,7 @@ The two Arduino sketches are **loaded separately** depending on the mode needed 
 
 ### `StepperMotorFullMotion.ino` — Automated Scan
 
-Flash this sketch when running a full acquisition. It waits for a `'G'` command over Serial, then performs a boustrophedon (snake-path) raster scan of the XY stage, sampling the analog sensor at each step and streaming `x_mm y_mm thickness_mm` triples back to the host.
+Flash this sketch when running a full acquisition. It waits for a `'G'` command over Serial, then performs a snake scan of the platform, sampling the analog sensor at each step and streaming `x_mm y_mm thickness_mm` triples back to the host.
 
 **Key parameters (edit at top of file):**
 
